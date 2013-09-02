@@ -1,7 +1,7 @@
 
 package org.crocodile.altituderecorder;
 
-import org.crocodile.altituderecorder.EventRecordService.LocalBinder;
+import org.crocodile.altituderecorder.AltitudeRecordService.LocalBinder;
 
 import android.os.Bundle;
 import android.os.IBinder;
@@ -15,7 +15,7 @@ import android.widget.TextView;
 public class MainActivity extends Activity
 {
     boolean                   bound;
-    EventRecordService        serv;
+    AltitudeRecordService        serv;
 
     private ServiceConnection connection = new ServiceConnection() {
 
@@ -64,7 +64,7 @@ public class MainActivity extends Activity
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Intent i = new Intent(this, EventRecordService.class);
+        Intent i = new Intent(this, AltitudeRecordService.class);
         bindService(i, connection, BIND_AUTO_CREATE);
     }
 

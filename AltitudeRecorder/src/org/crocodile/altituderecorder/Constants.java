@@ -6,7 +6,7 @@ public interface Constants
 
     public static final String LOGTAG                = "AltitudeRecorder";
 
-    public static final String BROADCAST_TAG         = "EventRecordService";
+    public static final String BROADCAST_TAG         = "AltitudeRecordService";
     public static final String BROADCAST_FNAME       = "Filename";
 
     public static final int    SERVICE_STARTED_TOKEN = 1;

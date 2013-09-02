@@ -14,7 +14,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service android:name="EventRecordService" android:label="EventRecordService" android:enabled="true" android:exported="false">           
+        <service android:name="AltitudeRecordService" android:label="AltitudeRecordService" android:enabled="true" android:exported="false">           
             <intent-filter>
                 <action android:name="recordEvents" />
             </intent-filter>

@@ -9,7 +9,7 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
-public class EventRecordService extends Service
+public class AltitudeRecordService extends Service
 {
     private static final String DATA_FILE_SUFFIX   = ".txt";
     private static final String DATA_FILE_PREFIX   = "alt-";
@@ -28,9 +28,9 @@ public class EventRecordService extends Service
 
     public class LocalBinder extends Binder
     {
-        EventRecordService getService()
+        AltitudeRecordService getService()
         {
-            return EventRecordService.this;
+            return AltitudeRecordService.this;
         }
     }
 
