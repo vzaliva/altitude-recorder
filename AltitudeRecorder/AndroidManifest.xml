@@ -6,17 +6,8 @@
 
     <uses-sdk
         android:minSdkVersion="16"
-        android:targetSdkVersion="17" />
-    
-
-    <application
-        android:allowBackup="true"
-        android:icon="@drawable/ic_launcher"
-        android:label="@string/app_name"
-        android:theme="@style/AppTheme" >
-        <activity
-            android:name="org.crocodile.altituderecorder.MainActivity"
-            android:label="@string/app_name" >
+        android:targetSdkVersion="17" /><application android:allowBackup="true" android:icon="@drawable/ic_launcher" android:label="@string/app_name" android:theme="@style/AppTheme">
+        <activity android:name="org.crocodile.altituderecorder.MainActivity" android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -25,7 +16,7 @@
         </activity>
         <service android:name="EventRecordService" android:label="EventRecordService" android:enabled="true" android:exported="false">           
             <intent-filter>
-                <action android:name="recordEvents"/>
+                <action android:name="recordEvents" />
             </intent-filter>
             
         </service>
