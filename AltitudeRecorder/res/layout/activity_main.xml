@@ -9,8 +9,39 @@
     tools:context=".MainActivity" >
 
     <TextView
+        android:id="@+id/statusLabel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/hello_world" />
+        android:text="@string/stop_notification"
+        android:textColor="@color/statusLabel" />
+
+    <Button
+        android:id="@+id/startButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/statusLabel"
+        android:layout_below="@+id/statusLabel"
+        android:layout_marginTop="40dp"
+        android:onClick="onStartClicked"
+        android:text="@string/start_button" />
+
+    <Button
+        android:id="@+id/stopButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/startButton"
+        android:layout_alignBottom="@+id/startButton"
+        android:layout_marginLeft="83dp"
+        android:layout_toRightOf="@+id/statusLabel"
+        android:onClick="onStopClicked"
+        android:text="@string/stop_button" />
+
+    <TextView
+        android:id="@+id/filenameLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/statusLabel"
+        android:layout_below="@+id/statusLabel"
+        android:text="" />
 
 </RelativeLayout>

@@ -5,8 +5,9 @@
     android:versionName="1.0" >
 
     <uses-sdk
-        android:minSdkVersion="8"
+        android:minSdkVersion="16"
         android:targetSdkVersion="17" />
+    
 
     <application
         android:allowBackup="true"
@@ -22,6 +23,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <service android:name="EventRecordService" android:label="EventRecordService" android:enabled="true" android:exported="false">           
+            <intent-filter>
+                <action android:name="recordEvents"/>
+            </intent-filter>
+            
+        </service>
     </application>
 
 </manifest>
