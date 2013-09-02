@@ -1,7 +1,8 @@
 
 package org.crocodile.altituderecorder;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 
 import android.app.*;
 import android.content.Intent;
@@ -13,14 +14,10 @@ public class AltitudeRecordService extends Service
 {
     private static final String DATA_FILE_SUFFIX   = ".txt";
     private static final String DATA_FILE_PREFIX   = "alt-";
-    private static final String MONITOR_CMD        = "nohup /data/tmp/monitor_proximity -v &>>/data/tmp/monitor.log &";
 
     private int                 START_NOTIFICATION = R.string.start_notification;
     private int                 STOP_NOTIFICATION  = R.string.stop_notification;
     private boolean             recording          = false;
-
-    private int                 pid1               = -1;
-    private int                 pid2               = -1;
 
     private String              fname;
 
@@ -64,123 +61,16 @@ public class AltitudeRecordService extends Service
         this.sendBroadcast(i);
     }
 
-    private void killDaemon() throws IOException
-    {
-        Process suProcess = Runtime.getRuntime().exec("su");
-        try
-        {
-            DataOutputStream stdin = new DataOutputStream(suProcess.getOutputStream());
-
-            // Kill recorder
-            killCMD(stdin, pid1);
-            pid1 = -1;
-
-            // Kill monitor
-            killCMD(stdin, pid2);
-            pid2 = -1;
-
-            Log.d(Constants.LOGTAG, "Exiting SU");
-            stdin.writeBytes("exit\n");
-            stdin.flush();
-            Log.d(Constants.LOGTAG, "Waiting for SU");
-            try
-            {
-                suProcess.waitFor();
-                Log.d(Constants.LOGTAG, "Done waiting for SU");
-            } catch(InterruptedException e)
-            {
-                Log.e(Constants.LOGTAG, "Error waiting for SU");
-            }
-        } finally
-        {
-            Log.d(Constants.LOGTAG, "Destroying SU");
-            suProcess.destroy();
-        }
-        Log.d(Constants.LOGTAG, "SU done");
-    }
-
-    private void killCMD(DataOutputStream stdin, int pid) throws IOException
-    {
-        if(pid != -1)
-        {
-            String cmd = "kill " + pid;
-            Log.d(Constants.LOGTAG, "Sending cmd: " + cmd);
-            stdin.writeBytes(cmd + "\n");
-            stdin.flush();
-        }
-    }
-
-    private void lauchDaemon() throws IOException
-    {
-        fname = getNewLogFile();
-        Log.d(Constants.LOGTAG, "Will write data to file " + fname);
-
-        String cmd1 = "nohup getevent -t -q /dev/input/event3 " + " >> " + fname + " &";
-        String cmd2 = MONITOR_CMD;
-
-        Process suProcess = Runtime.getRuntime().exec("su");
-        try
-        {
-            DataOutputStream stdin = new DataOutputStream(suProcess.getOutputStream());
-            BufferedReader stdout = new BufferedReader(new InputStreamReader(suProcess.getInputStream()));
-
-            pid2 = runCMD(cmd2, stdin, stdout);
-            try
-            {
-                pid1 = runCMD(cmd1, stdin, stdout);
-            } catch(IOException ex)
-            {
-                // Error starting second command. Clean up by killing first one
-                throw ex;
-            }
-
-            Log.d(Constants.LOGTAG, "Exiting SU");
-            stdin.writeBytes("exit\n");
-            stdin.flush();
-            Log.d(Constants.LOGTAG, "Waiting for SU");
-            try
-            {
-                suProcess.waitFor();
-                Log.d(Constants.LOGTAG, "Done waiting for SU");
-            } catch(InterruptedException e)
-            {
-                Log.e(Constants.LOGTAG, "Error waiting for SU");
-            }
-        } finally
-        {
-            Log.d(Constants.LOGTAG, "Destroying SU");
-            suProcess.destroy();
-        }
-        Log.d(Constants.LOGTAG, "SU done");
-    }
-
-    private int runCMD(String cmd, DataOutputStream stdin, BufferedReader stdout) throws IOException
-    {
-        Log.d(Constants.LOGTAG, "Sending cmd: " + cmd);
-        stdin.writeBytes(cmd + "\n");
-        stdin.flush();
-        stdin.writeBytes("echo $!\n");
-        stdin.flush();
-        String pids = stdout.readLine();
-        try
-        {
-            int pid = Integer.parseInt(pids);
-            Log.d(Constants.LOGTAG, "Daemon started with PID=" + pid);
-            return pid;
-        } catch(NumberFormatException nex)
-        {
-            throw new IOException("Invalid PID: " + pids);
-        }
-    }
-
     public void startRecording()
     {
         if(!recording)
         {
             try
             {
-                lauchDaemon();
+                fname = getNewLogFile();
+                Log.d(Constants.LOGTAG, "Will write data to file " + fname);
 
+                // TODO: start
                 recording = true;
                 showNotification(START_NOTIFICATION);
                 sendBroadcast(Constants.SERVICE_STARTED_TOKEN, fname);
@@ -196,18 +86,10 @@ public class AltitudeRecordService extends Service
     {
         if(recording)
         {
-            try
-            {
-                killDaemon();
-
-                recording = false;
-                showNotification(STOP_NOTIFICATION);
-                sendBroadcast(Constants.SERVICE_STOPPED_TOKEN, fname);
-            } catch(IOException e)
-            {
-                recording = true;
-                Log.e(Constants.LOGTAG, "Error stopping service", e);
-            }
+            // TODO: stop
+            recording = false;
+            showNotification(STOP_NOTIFICATION);
+            sendBroadcast(Constants.SERVICE_STOPPED_TOKEN, fname);
         }
     }
 
