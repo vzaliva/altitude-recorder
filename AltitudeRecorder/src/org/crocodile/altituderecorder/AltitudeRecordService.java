@@ -6,12 +6,13 @@ import java.io.*;
 import android.app.*;
 import android.content.Context;
 import android.content.Intent;
+import android.hardware.*;
 import android.location.GpsStatus.NmeaListener;
 import android.location.*;
 import android.os.*;
 import android.util.Log;
 
-public class AltitudeRecordService extends Service implements NmeaListener, LocationListener
+public class AltitudeRecordService extends Service implements NmeaListener, LocationListener, SensorEventListener
 {
     private static final String DATA_FILE_SUFFIX   = ".txt";
     private static final String DATA_FILE_PREFIX   = "altitude-";
@@ -72,9 +73,13 @@ public class AltitudeRecordService extends Service implements NmeaListener, Loca
                 fwriter = new FileWriter(fname);
                 Log.d(Constants.LOGTAG, "Will write data to file " + fname);
 
-                LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+                LocationManager lm = (LocationManager) getSystemService(LOCATION_SERVICE);
                 lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, Constants.UPDATE_INTERVAL, 0, this);
                 lm.addNmeaListener(this);
+
+                SensorManager sm = (SensorManager) getSystemService(SENSOR_SERVICE);
+                Sensor baro = sm.getDefaultSensor(Sensor.TYPE_PRESSURE);
+                sm.registerListener(this, baro, Constants.UPDATE_INTERVAL);
 
                 showNotification(START_NOTIFICATION);
                 sendBroadcast(Constants.SERVICE_STARTED_TOKEN, fname);
@@ -103,6 +108,10 @@ public class AltitudeRecordService extends Service implements NmeaListener, Loca
             LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
             lm.removeUpdates(this);
             lm.removeNmeaListener(this);
+
+            SensorManager sm = (SensorManager) getSystemService(SENSOR_SERVICE);
+            sm.unregisterListener(this);
+
             try
             {
                 fwriter.close();
@@ -150,40 +159,77 @@ public class AltitudeRecordService extends Service implements NmeaListener, Loca
     @Override
     public void onNmeaReceived(long timestamp, String nmea)
     {
-        // TODO Auto-generated method stub
-        String msg = "" + timestamp + ";" + nmea;
-        try
+        String msg = "" + timestamp + Constants.TIMESTAMP_SEPARATOR + nmea.trim();
+        logData(msg);
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event)
+    {
+        StringBuffer msg = new StringBuffer();
+        msg.append(event.timestamp);
+        msg.append(Constants.TIMESTAMP_SEPARATOR);
+        msg.append(Constants.BARO_PREFIX);
+        msg.append(',');
+        msg.append(event.accuracy);
+        for(float v : event.values)
         {
-            fwriter.write(msg);
-        } catch(IOException e)
+            msg.append(',');
+            msg.append(v);
+        }
+        logData(msg.toString());
+    }
+
+    public void logData(String msg)
+    {
+        synchronized(fwriter)
         {
-            Log.e(Constants.LOGTAG, "Error writing log. Stopping service", e);
-            stopRecording();
+            try
+            {
+                fwriter.write(msg);
+                fwriter.write("\n");
+            } catch(IOException e)
+            {
+                Log.e(Constants.LOGTAG, "Error writing log. Stopping service", e);
+                stopRecording();
+            }
         }
     }
+
+    // ----- Nothing interesting below -------
 
     @Override
     public void onLocationChanged(Location location)
     {
-        // Intentionally left blank
+        // Intentionally left blank. We implement LocationListener only to allow
+        // event flow to NmeaListener
     }
 
     @Override
     public void onProviderDisabled(String provider)
     {
-        // Intentionally left blank
+        // Intentionally left blank. We implement LocationListener only to allow
+        // event flow to NmeaListener
     }
 
     @Override
     public void onProviderEnabled(String provider)
     {
-        // Intentionally left blank
+        // Intentionally left blank. We implement LocationListener only to allow
+        // event flow to NmeaListener
     }
 
     @Override
     public void onStatusChanged(String provider, int status, Bundle extras)
     {
-        // Intentionally left blank
+        // Intentionally left blank. We implement LocationListener only to allow
+        // event flow to NmeaListener
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy)
+    {
+        // Intentionally left blank.
     }
 
 }

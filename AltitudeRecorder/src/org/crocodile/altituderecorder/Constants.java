@@ -14,4 +14,8 @@ public interface Constants
 
     static final int    UPDATE_INTERVAL       = 1000;
 
+    static final String BARO_PREFIX           = "#BARO";
+
+    static final String TIMESTAMP_SEPARATOR   = ";";
+
 }
