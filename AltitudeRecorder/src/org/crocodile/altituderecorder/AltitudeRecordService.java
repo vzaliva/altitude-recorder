@@ -2,6 +2,7 @@
 package org.crocodile.altituderecorder;
 
 import java.io.*;
+import java.util.Date;
 
 import android.app.*;
 import android.content.Context;
@@ -159,7 +160,9 @@ public class AltitudeRecordService extends Service implements NmeaListener, Loca
     @Override
     public void onNmeaReceived(long timestamp, String nmea)
     {
-        // Units of timestamp in NmeaListener are not documented.
+        // Units of timestamp in NmeaListener are not documented, but
+        // seems to be in milliseconds since Java epoch (same as
+        // System.currentTimeMillis())
         String msg = "" + timestamp + Constants.TIMESTAMP_SEPARATOR + nmea.trim();
         logData(msg);
     }
@@ -167,33 +170,51 @@ public class AltitudeRecordService extends Service implements NmeaListener, Loca
     @Override
     public void onSensorChanged(SensorEvent event)
     {
-        StringBuffer msg = new StringBuffer();
-        msg.append(event.timestamp); // nanoseconds
-        msg.append(Constants.TIMESTAMP_SEPARATOR);
-        msg.append(Constants.BARO_PREFIX);
-        msg.append(',');
-        msg.append(event.accuracy);
-        for(float v : event.values)
+        if(Sensor.TYPE_PRESSURE == event.sensor.getType())
         {
+            StringBuffer msg = new StringBuffer();
+            // event.timestamp is nanoseconds since boot!
+            // See: https://code.google.com/p/android/issues/detail?id=7981
+            msg.append(uptimeNSToEpochMS(event.timestamp));
+            msg.append(Constants.TIMESTAMP_SEPARATOR);
+            msg.append(Constants.BARO_PREFIX);
             msg.append(',');
-            msg.append(v);
+            msg.append(event.accuracy);
+
+            /*
+             * 3 - SensorManager.SENSOR_STATUS_ACCURACY_HIGH - high accuracy; 2
+             * - SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM - medium accuracy;
+             * 1 - SensorManager.SENSOR_STATUS_ACCURACY_LOW - low accuracy; 0 -
+             * SensorManager.SENSOR_STATUS_UNRELIABLE - accuracy is unreliable
+             * and cannot be trusted
+             */
+
+            msg.append(',');
+            msg.append(event.values[0]); // hPa
+            logData(msg.toString());
         }
-        logData(msg.toString());
+    }
+
+    private long uptimeNSToEpochMS(long uptime_ns)
+    {
+        // See
+        // http://stackoverflow.com/questions/5500765/accelerometer-sensorevent-timestamp
+        // This conversion could introduce insignificant error due to added delay of taking time. 
+        long timeInMillis = (new Date()).getTime() + (uptime_ns - System.nanoTime()) / 1000000L;
+        return timeInMillis;
     }
 
     private void logData(String msg)
     {
-        synchronized(fwriter)
+        // TODO: should be performed via async task!
+        try
         {
-            try
-            {
-                fwriter.write(msg);
-                fwriter.write("\n");
-            } catch(IOException e)
-            {
-                Log.e(Constants.LOGTAG, "Error writing log. Stopping service", e);
-                stopRecording();
-            }
+            if(fwriter != null)
+                fwriter.write(msg + "\n");
+        } catch(IOException e)
+        {
+            Log.e(Constants.LOGTAG, "Error writing log. Stopping service", e);
+            stopRecording();
         }
     }
 
