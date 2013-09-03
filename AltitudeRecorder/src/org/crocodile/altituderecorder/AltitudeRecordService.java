@@ -15,7 +15,7 @@ import android.util.Log;
 public class AltitudeRecordService extends Service implements NmeaListener, LocationListener, SensorEventListener
 {
     private static final String DATA_FILE_SUFFIX   = ".txt";
-    private static final String DATA_FILE_PREFIX   = "altitude-";
+    private static final String DATA_FILE_PREFIX   = "altitude";
 
     private int                 START_NOTIFICATION = R.string.start_notification;
     private int                 STOP_NOTIFICATION  = R.string.stop_notification;
@@ -159,6 +159,7 @@ public class AltitudeRecordService extends Service implements NmeaListener, Loca
     @Override
     public void onNmeaReceived(long timestamp, String nmea)
     {
+        // Units of timestamp in NmeaListener are not documented.
         String msg = "" + timestamp + Constants.TIMESTAMP_SEPARATOR + nmea.trim();
         logData(msg);
     }
@@ -167,7 +168,7 @@ public class AltitudeRecordService extends Service implements NmeaListener, Loca
     public void onSensorChanged(SensorEvent event)
     {
         StringBuffer msg = new StringBuffer();
-        msg.append(event.timestamp);
+        msg.append(event.timestamp); // nanoseconds
         msg.append(Constants.TIMESTAMP_SEPARATOR);
         msg.append(Constants.BARO_PREFIX);
         msg.append(',');
@@ -180,7 +181,7 @@ public class AltitudeRecordService extends Service implements NmeaListener, Loca
         logData(msg.toString());
     }
 
-    public void logData(String msg)
+    private void logData(String msg)
     {
         synchronized(fwriter)
         {
