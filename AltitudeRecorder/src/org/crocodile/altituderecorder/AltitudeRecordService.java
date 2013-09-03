@@ -68,24 +68,31 @@ public class AltitudeRecordService extends Service implements NmeaListener, Loca
     {
         if(fwriter == null)
         {
+            LocationManager lm = (LocationManager) getSystemService(LOCATION_SERVICE);
+            SensorManager sm = (SensorManager) getSystemService(SENSOR_SERVICE);
             try
             {
                 fname = getNewLogFile();
                 fwriter = new FileWriter(fname);
                 Log.d(Constants.LOGTAG, "Will write data to file " + fname);
 
-                LocationManager lm = (LocationManager) getSystemService(LOCATION_SERVICE);
                 lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, Constants.UPDATE_INTERVAL, 0, this);
-                lm.addNmeaListener(this);
+                if(!lm.addNmeaListener(this))
+                    throw new IOException("Error registrting for NMEA updates");
 
-                SensorManager sm = (SensorManager) getSystemService(SENSOR_SERVICE);
                 Sensor baro = sm.getDefaultSensor(Sensor.TYPE_PRESSURE);
-                sm.registerListener(this, baro, Constants.UPDATE_INTERVAL);
+                if(!sm.registerListener(this, baro, Constants.UPDATE_INTERVAL))
+                    throw new IOException("Error registrting for Pressure updates");
 
                 showNotification(START_NOTIFICATION);
                 sendBroadcast(Constants.SERVICE_STARTED_TOKEN, fname);
             } catch(IOException e)
             {
+                // Something went wrong. Unregister all listeners.
+                lm.removeUpdates(this);
+                lm.removeNmeaListener(this);
+                sm.unregisterListener(this);
+
                 Log.e(Constants.LOGTAG, "Error starting service", e);
                 if(fwriter != null)
                 {
@@ -199,7 +206,8 @@ public class AltitudeRecordService extends Service implements NmeaListener, Loca
     {
         // See
         // http://stackoverflow.com/questions/5500765/accelerometer-sensorevent-timestamp
-        // This conversion could introduce insignificant error due to added delay of taking time. 
+        // This conversion could introduce insignificant error due to added
+        // delay of taking time.
         long timeInMillis = (new Date()).getTime() + (uptime_ns - System.nanoTime()) / 1000000L;
         return timeInMillis;
     }
