@@ -15,13 +15,13 @@ import android.widget.TextView;
 public class MainActivity extends Activity
 {
     boolean                   bound;
-    AltitudeRecordService        serv;
+    AltitudeRecordService     serv;
 
     private ServiceConnection connection = new ServiceConnection() {
 
                                              public void onServiceDisconnected(ComponentName name)
                                              {
-                                                 System.err.println("Service is disconnected");
+                                                 Log.d(Constants.LOGTAG, "Service is disconnected");
                                                  bound = false;
                                                  serv = null;
                                              }
@@ -29,7 +29,7 @@ public class MainActivity extends Activity
                                              @Override
                                              public void onServiceConnected(ComponentName name, IBinder service)
                                              {
-                                                 System.err.println("Service is connected");
+                                                 Log.d(Constants.LOGTAG, "Service is connected");
                                                  bound = true;
                                                  LocalBinder mLocalBinder = (LocalBinder) service;
                                                  serv = mLocalBinder.getService();
@@ -66,6 +66,13 @@ public class MainActivity extends Activity
         setContentView(R.layout.activity_main);
         Intent i = new Intent(this, AltitudeRecordService.class);
         bindService(i, connection, BIND_AUTO_CREATE);
+    }
+
+    @Override
+    protected void onDestroy()
+    {
+        super.onDestroy();
+        unbindService(connection);
     }
 
     protected void broadcastReceived(int token, String fname)

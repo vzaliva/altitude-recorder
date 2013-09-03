@@ -1,30 +1,28 @@
 
 package org.crocodile.altituderecorder;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 
 import android.app.*;
 import android.content.Context;
 import android.content.Intent;
 import android.location.GpsStatus.NmeaListener;
-import android.location.LocationManager;
-import android.os.Binder;
-import android.os.IBinder;
+import android.location.*;
+import android.os.*;
 import android.util.Log;
 
-public class AltitudeRecordService extends Service implements NmeaListener
+public class AltitudeRecordService extends Service implements NmeaListener, LocationListener
 {
     private static final String DATA_FILE_SUFFIX   = ".txt";
-    private static final String DATA_FILE_PREFIX   = "alt-";
+    private static final String DATA_FILE_PREFIX   = "altitude-";
 
     private int                 START_NOTIFICATION = R.string.start_notification;
     private int                 STOP_NOTIFICATION  = R.string.stop_notification;
-    private boolean             recording          = false;
+
+    private IBinder             binder             = new LocalBinder();
 
     private String              fname;
-
-    IBinder                     binder             = new LocalBinder();
+    Writer                      fwriter;
 
     public class LocalBinder extends Binder
     {
@@ -66,35 +64,54 @@ public class AltitudeRecordService extends Service implements NmeaListener
 
     public void startRecording()
     {
-        if(!recording)
+        if(fwriter == null)
         {
             try
             {
                 fname = getNewLogFile();
+                fwriter = new FileWriter(fname);
                 Log.d(Constants.LOGTAG, "Will write data to file " + fname);
 
                 LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+                lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, Constants.UPDATE_INTERVAL, 0, this);
                 lm.addNmeaListener(this);
-                recording = true;
 
                 showNotification(START_NOTIFICATION);
                 sendBroadcast(Constants.SERVICE_STARTED_TOKEN, fname);
             } catch(IOException e)
             {
-                recording = false;
                 Log.e(Constants.LOGTAG, "Error starting service", e);
+                if(fwriter != null)
+                {
+                    try
+                    {
+                        fwriter.close();
+                    } catch(IOException e1)
+                    {
+                        // ignore
+                    }
+                    fwriter = null;
+                }
             }
         }
     }
 
     public void stopRecording()
     {
-        if(recording)
+        if(fwriter != null)
         {
             LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+            lm.removeUpdates(this);
             lm.removeNmeaListener(this);
+            try
+            {
+                fwriter.close();
+            } catch(IOException e1)
+            {
+                // ignore
+            }
 
-            recording = false;
+            fwriter = null;
             showNotification(STOP_NOTIFICATION);
             sendBroadcast(Constants.SERVICE_STOPPED_TOKEN, fname);
         }
@@ -102,7 +119,7 @@ public class AltitudeRecordService extends Service implements NmeaListener
 
     public boolean isRecording()
     {
-        return recording;
+        return fwriter != null;
     }
 
     /**
@@ -134,7 +151,39 @@ public class AltitudeRecordService extends Service implements NmeaListener
     public void onNmeaReceived(long timestamp, String nmea)
     {
         // TODO Auto-generated method stub
+        String msg = "" + timestamp + ";" + nmea;
+        try
+        {
+            fwriter.write(msg);
+        } catch(IOException e)
+        {
+            Log.e(Constants.LOGTAG, "Error writing log. Stopping service", e);
+            stopRecording();
+        }
+    }
 
+    @Override
+    public void onLocationChanged(Location location)
+    {
+        // Intentionally left blank
+    }
+
+    @Override
+    public void onProviderDisabled(String provider)
+    {
+        // Intentionally left blank
+    }
+
+    @Override
+    public void onProviderEnabled(String provider)
+    {
+        // Intentionally left blank
+    }
+
+    @Override
+    public void onStatusChanged(String provider, int status, Bundle extras)
+    {
+        // Intentionally left blank
     }
 
 }
