@@ -18,4 +18,9 @@ public interface Constants
 
     static final String TIMESTAMP_SEPARATOR   = ";";
 
+    /**
+     * Used for notifications in task bar.
+     */
+    static final int    NOTIFICATION_ID       = 0;
+
 }

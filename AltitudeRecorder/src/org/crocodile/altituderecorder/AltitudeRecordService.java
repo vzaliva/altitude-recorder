@@ -154,7 +154,7 @@ public class AltitudeRecordService extends Service implements NmeaListener, Loca
                 .setContentText(text).setSmallIcon(R.drawable.ic_launcher).setContentIntent(contentIntent).build();
 
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        nm.notify(n, notification);
+        nm.notify(Constants.NOTIFICATION_ID, notification);
     }
 
     private String getNewLogFile() throws IOException
