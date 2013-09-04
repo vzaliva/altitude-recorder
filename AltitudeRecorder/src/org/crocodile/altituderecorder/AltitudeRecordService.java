@@ -15,10 +15,10 @@ import android.util.Log;
 
 public class AltitudeRecordService extends Service implements NmeaListener, LocationListener, SensorEventListener
 {
-    private static final String DATA_FILE_SUFFIX   = ".txt";
-    private static final String DATA_FILE_PREFIX   = "altitude";
+    private static final String DATA_FILE_SUFFIX = ".txt";
+    private static final String DATA_FILE_PREFIX = "altitude";
 
-    private IBinder             binder             = new LocalBinder();
+    private IBinder             binder           = new LocalBinder();
 
     private String              fname;
     Writer                      fwriter;
@@ -168,7 +168,7 @@ public class AltitudeRecordService extends Service implements NmeaListener, Loca
         // seems to be in milliseconds since Java epoch (same as
         // System.currentTimeMillis())
         String msg = "" + timestamp + Constants.TIMESTAMP_SEPARATOR + nmea.trim();
-        logData(msg);
+        new DataLogTask().execute(msg);
     }
 
     @Override
@@ -195,7 +195,7 @@ public class AltitudeRecordService extends Service implements NmeaListener, Loca
 
             msg.append(',');
             msg.append(event.values[0]); // hPa
-            logData(msg.toString());
+            new DataLogTask().execute(msg.toString());
         }
     }
 
@@ -209,9 +209,19 @@ public class AltitudeRecordService extends Service implements NmeaListener, Loca
         return timeInMillis;
     }
 
+    private class DataLogTask extends AsyncTask<String, Void, Void>
+    {
+        @Override
+        protected Void doInBackground(String... events)
+        {
+            logData(events[0]);
+            return null;
+        }
+    };
+
     private void logData(String msg)
     {
-        // TODO: should be performed via async task!
+        // Should be called via async task!
         try
         {
             if(fwriter != null)
