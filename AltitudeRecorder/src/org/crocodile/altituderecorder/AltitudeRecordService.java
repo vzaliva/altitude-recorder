@@ -18,9 +18,6 @@ public class AltitudeRecordService extends Service implements NmeaListener, Loca
     private static final String DATA_FILE_SUFFIX   = ".txt";
     private static final String DATA_FILE_PREFIX   = "altitude";
 
-    private int                 START_NOTIFICATION = R.string.start_notification;
-    private int                 STOP_NOTIFICATION  = R.string.stop_notification;
-
     private IBinder             binder             = new LocalBinder();
 
     private String              fname;
@@ -84,7 +81,7 @@ public class AltitudeRecordService extends Service implements NmeaListener, Loca
                 if(!sm.registerListener(this, baro, Constants.UPDATE_INTERVAL))
                     throw new IOException("Error registrting for Pressure updates");
 
-                showNotification(START_NOTIFICATION);
+                showNotification(R.string.start_notification);
                 sendBroadcast(Constants.SERVICE_STARTED_TOKEN, fname);
             } catch(IOException e)
             {
@@ -129,7 +126,7 @@ public class AltitudeRecordService extends Service implements NmeaListener, Loca
             }
 
             fwriter = null;
-            showNotification(STOP_NOTIFICATION);
+            showNotification(R.string.stop_notification);
             sendBroadcast(Constants.SERVICE_STOPPED_TOKEN, fname);
         }
     }
